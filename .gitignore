@@ -30,3 +30,8 @@ JuliaLocalPreferences.toml
 
 # Conda environment and metadata created in the project directory by the CondaPkg package
 .CondaPkg/
+
+# Franklin.jl
+__site/
+__cache/
+node_modules/

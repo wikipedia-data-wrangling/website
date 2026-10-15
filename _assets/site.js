@@ -1,0 +1,152 @@
+(() => {
+    "use strict";
+
+    document.documentElement.classList.add("has-js");
+    const menu = document.querySelector(".menu-toggle");
+    const navigation = document.querySelector(".site-navigation");
+    if (menu && navigation) {
+        menu.hidden = false;
+        menu.addEventListener("click", () => {
+            const open = menu.getAttribute("aria-expanded") !== "true";
+            menu.setAttribute("aria-expanded", String(open));
+            navigation.classList.toggle("is-open", open);
+        });
+        document.addEventListener("keydown", (event) => {
+            if (
+                event.key === "Escape" &&
+                menu.getAttribute("aria-expanded") === "true"
+            ) {
+                menu.setAttribute("aria-expanded", "false");
+                navigation.classList.remove("is-open");
+                menu.focus();
+            }
+        });
+    }
+
+    // Mark the current section in the header and in the wide-screen rail.
+    document
+        .querySelectorAll(".site-navigation a, .scroll-navigation nav a")
+        .forEach((link) => {
+            if (
+                link.origin === location.origin &&
+                location.pathname.startsWith(link.pathname)
+            ) {
+                link.setAttribute("aria-current", "page");
+            }
+        });
+    const sectionLabel = document.querySelector(".current-section-label");
+    const currentSection = document.querySelector(
+        ".site-navigation a[aria-current]",
+    );
+    if (sectionLabel && currentSection)
+        sectionLabel.textContent = currentSection.textContent.trim();
+
+    // On wide screens the navigation moves into the left margin once the
+    // header has scrolled out of view.
+    const siteHeader = document.querySelector(".site-header");
+    const rail = document.querySelector(".scroll-navigation");
+    if (siteHeader && rail && "IntersectionObserver" in window) {
+        const wide = window.matchMedia("(min-width: 1400px)");
+        const updateRail = () => {
+            const show =
+                wide.matches && siteHeader.getBoundingClientRect().bottom <= 0;
+            if (!show && rail.contains(document.activeElement)) {
+                const focused = document.activeElement.closest("a");
+                const match = [...siteHeader.querySelectorAll("a")].find(
+                    (a) => a.href === focused?.href,
+                );
+                (match || siteHeader.querySelector("a")).focus({
+                    preventScroll: true,
+                });
+            }
+            rail.hidden = !show;
+        };
+        new IntersectionObserver(updateRail, { threshold: 0 }).observe(
+            siteHeader,
+        );
+        wide.addEventListener("change", updateRail);
+        updateRail();
+    }
+
+    const sectionLinks = [...document.querySelectorAll(
+        '.sidebar a[href^="#"], .article-nav a[href^="#"]',
+    )]
+        .map((link) => ({
+            link,
+            section: document.getElementById(link.hash.slice(1)),
+        }))
+        .filter((item) => item.section);
+    if (sectionLinks.length) {
+        let scheduled = false;
+        const updateSection = () => {
+            scheduled = false;
+            let current = sectionLinks[0];
+            for (const item of sectionLinks) {
+                if (item.section.getBoundingClientRect().top <= 140)
+                    current = item;
+            }
+            sectionLinks.forEach((item) => {
+                item.link.classList.toggle("active", item === current);
+                if (item === current)
+                    item.link.setAttribute("aria-current", "location");
+                else item.link.removeAttribute("aria-current");
+            });
+        };
+        window.addEventListener(
+            "scroll",
+            () => {
+                if (!scheduled) {
+                    scheduled = true;
+                    requestAnimationFrame(updateSection);
+                }
+            },
+            { passive: true },
+        );
+        updateSection();
+    }
+
+    document.querySelectorAll(".page-content table").forEach((table) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "table-scroll";
+        wrapper.setAttribute("role", "region");
+        wrapper.setAttribute("aria-label", "Scrollable table");
+        wrapper.tabIndex = 0;
+        table.before(wrapper);
+        wrapper.append(table);
+    });
+
+    document.querySelectorAll("pre").forEach((pre) => {
+        pre.tabIndex = 0;
+        pre.setAttribute("role", "region");
+        pre.setAttribute("aria-label", "Code example");
+    });
+
+    if (navigator.clipboard && window.isSecureContext) {
+        document.querySelectorAll("pre > code").forEach((code) => {
+            const pre = code.parentElement;
+            const wrapper = document.createElement("div");
+            wrapper.className = "code-wrap";
+            pre.before(wrapper);
+            wrapper.append(pre);
+            const button = document.createElement("button");
+            button.className = "copy-code";
+            button.textContent = "Copy";
+            button.setAttribute("aria-label", "Copy code to clipboard");
+            button.addEventListener("click", async () => {
+                try {
+                    await navigator.clipboard.writeText(code.textContent);
+                    button.textContent = "Copied";
+                    button.setAttribute("aria-label", "Copied to clipboard");
+                } catch {
+                    button.textContent = "Select code to copy";
+                    button.setAttribute("aria-label", "Select code to copy");
+                }
+                setTimeout(() => {
+                    button.textContent = "Copy";
+                    button.setAttribute("aria-label", "Copy code to clipboard");
+                }, 2500);
+            });
+            wrapper.append(button);
+        });
+    }
+})();
