@@ -1,8 +1,8 @@
-# wikipedia-as-data
+# website
 
 A simple website showcasing the project: the English Wikipedia's edit history
 and protection record as a research database. Published at
-<https://wikipedia-data-wrangling.github.io/wikipedia-as-data/>.
+<https://wikipedia-data-wrangling.github.io/website/>.
 
 Built with [Franklin.jl](https://franklinjl.org/); the layout follows the
 [Statistical analysis of networks in Julia](https://github.com/statistical-network-analysis-with-Julia/statistical-network-analysis-with-Julia.github.io)
@@ -16,7 +16,7 @@ julia --project -e 'using Pkg; Pkg.instantiate(); using Franklin; serve()'
 ```
 
 `serve()` previews at the site root; the deployed build adds the
-`/wikipedia-as-data` prefix (`prepath` in `config.md`).
+`/website` prefix (`prepath` in `config.md`).
 
 ## Publishing
 
